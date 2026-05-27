@@ -75,7 +75,7 @@ docker exec etl_airflow_web airflow dags trigger process_sales_data
 
 ---
 
-## Часть 1 — Data Transfer (аналог Yandex Data Transfer)
+## Часть 1 — Data Transfer (PostgreSQL → MinIO)
 
 **Схема:** PostgreSQL → MinIO
 
@@ -85,18 +85,17 @@ docker exec etl_airflow_web airflow dags trigger process_sales_data
 3. Создаёт бакет `etl-data` в MinIO (эндпоинт-приёмник)
 4. Загружает данные в форматах **CSV** и **Parquet**
 
-Результат в MinIO:
-```
-etl-data/
-└── raw/
-    └── 2026-05-27/
-        ├── sales.csv
-        └── sales.parquet
-```
+### Результат трансфера — терминал
+
+![transfer log](screenshots/01_transfer_log.png)
+
+### Результат трансфера — MinIO (raw-файлы)
+
+![minio raw](screenshots/02_minio_raw.png)
 
 ---
 
-## Часть 2 — Обработка данных (аналог Yandex AirFlow + Data Processing)
+## Часть 2 — Обработка данных (Airflow + Data Processing)
 
 **DAG:** `process_sales_data` (файл `dags/process_data_dag.py`)
 
@@ -110,26 +109,17 @@ extract_from_minio → transform_data → load_to_minio
 | `transform_data` | Агрегирует: по категории, региону, топ-товары, тренд по дням |
 | `load_to_minio` | Сохраняет результаты CSV + отчёт `report.txt` |
 
-Результат в MinIO:
-```
-etl-data/
-└── processed/
-    └── 2026-05-27/
-        ├── sales_by_category.csv
-        ├── sales_by_region.csv
-        ├── top_products.csv
-        ├── daily_trend.csv
-        └── report.txt
-```
+### Список DAGов в Airflow
 
-Пример отчёта:
-```
-ETL Pipeline — Отчёт
-========================================
-Дата запуска : 2026-05-27
-Строк обраб. : 20
-Выручка итого: 3,331,583.00 руб.
-```
+![airflow dags](screenshots/03_airflow_dags.png)
+
+### Граф выполнения DAG
+
+![airflow graph](screenshots/04_airflow_graph.png)
+
+### Результат обработки — MinIO (processed-файлы)
+
+![minio processed](screenshots/05_minio_processed.png)
 
 ---
 
